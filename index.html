@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" style="background:#0b1236;color-scheme:dark">
+<html lang="en" style="background:#16141a;color-scheme:dark">
 <head>
 <meta charset="utf-8">
 <meta name="color-scheme" content="dark">
@@ -62,7 +62,7 @@
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
   .glass { background: var(--card); border: 1px solid var(--card-border); box-shadow: var(--card-shadow); }
 
-  .nav { position: sticky; top: 0; z-index: 30; background: rgba(10,12,28,.55); border-bottom: 1px solid var(--sep);
+  .nav { position: sticky; top: 0; z-index: 30; background: var(--nav-bg, rgba(10,12,28,.55)); border-bottom: 1px solid var(--sep);
     -webkit-backdrop-filter: blur(18px) saturate(170%); backdrop-filter: blur(18px) saturate(170%);
     transform: translateZ(0); isolation: isolate; }
   .nav { padding-top: env(safe-area-inset-top); }
@@ -121,7 +121,7 @@
 
   .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
   input, select { font: 14px var(--font); color: var(--text); background: var(--fill); border: 0; border-radius: 10px; padding: 8px 12px; outline: none; }
-  input:focus, select:focus { box-shadow: 0 0 0 3px rgba(10,132,255,.45); }
+  input:focus, select:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 50%, transparent); }
   input::placeholder { color: var(--text-3); }
   .controls input { flex: 1; min-width: 180px; }
   select option { background: #2c2c2e; }
@@ -157,11 +157,16 @@
   dialog::backdrop { background: rgba(0,0,0,.45); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
   dialog form { padding: 22px 24px; }
   dialog h3 { margin: 0 0 16px; font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
-  .fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+  .fgrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px 14px; }
+  .fgrid label { min-width: 0; }
   .fgrid label { display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; color: var(--text-2); }
   .fgrid label.full { grid-column: 1 / -1; }
   .fgrid label[hidden] { display: none; }
-  .fgrid input, .fgrid select { width: 100%; min-width: 0; }
+  .fgrid input, .fgrid select { width: 100%; min-width: 0; height: 40px; box-sizing: border-box; }
+  .fgrid input[type=checkbox] { height: auto; }
+  .fgrid input[type=date] { -webkit-appearance: none; appearance: none; display: block; text-align: left; line-height: 24px; }
+  .fgrid input[type=date]::-webkit-date-and-time-value { text-align: left; }
+  dialog { overflow-x: hidden; }
   .fgrid label.check { flex-direction: row; align-items: center; gap: 8px; color: var(--text); font-size: 14px; }
   .fgrid label.check input { width: auto; accent-color: var(--accent); }
   .calc { grid-column: 1 / -1; font-size: 14px; color: var(--text-2); }
@@ -195,7 +200,7 @@
   button:active, .icon-btn:active { transform: scale(.94); }
   .icon-btn:hover { background: rgba(118,118,128,.36); }
   #refresh:hover { transform: rotate(-35deg); }
-  button.add:hover { filter: brightness(1.12); box-shadow: 0 8px 24px rgba(10,132,255,.45); }
+  button.add:hover { filter: brightness(1.12); box-shadow: 0 8px 24px color-mix(in srgb, var(--accent) 45%, transparent); }
 
   /* Glass: Apple TV-style tilt toward the pointer, with a faint glare */
   .glass { position: relative; transition: transform 1s var(--ease), box-shadow 1.1s var(--ease), border-color .9s var(--ease); }
@@ -252,7 +257,7 @@
 
   /* Nav reacts to scroll */
   .nav { transition: background .45s, box-shadow .45s; }
-  .nav.scrolled { background: rgba(8,10,24,.74); box-shadow: 0 12px 34px rgba(0,0,0,.35); }
+  .nav.scrolled { background: var(--nav-bg2, rgba(8,10,24,.74)); box-shadow: 0 12px 34px rgba(0,0,0,.35); }
   .nav h1 { transition: transform .5s var(--spring); transform-origin: left center; }
   .nav.scrolled h1 { transform: scale(.84); }
   .nav .sub { transition: opacity .35s; }
@@ -292,6 +297,9 @@
   /* Phone layout (kept last so it wins) */
   @media (max-width: 600px) {
     input, select { font-size: 16px; }
+    dialog form { padding: 20px 18px; }
+    .fgrid { gap: 10px; }
+    dialog h3 { font-size: 19px; }
     .table-scroll { margin: 0; overflow: visible; }
     table, tbody { display: block; width: 100%; }
     thead { display: none; }
@@ -321,6 +329,14 @@
     .client-row { grid-template-columns: 96px 1fr 88px; gap: 8px; }
     .seg.mini button { padding: 4px 8px; }
   }
+  /* Settings / theme picker */
+  .set-label { font-size: 12.5px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; margin: 4px 0 10px; }
+  .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; margin-bottom: 18px; }
+  .swatch { border: 1px solid var(--card-border); background: var(--fill-2); color: var(--text); border-radius: 16px; padding: 10px;
+    display: grid; gap: 8px; justify-items: start; cursor: pointer; font: 500 13.5px var(--font); text-align: left; }
+  .swatch .chip-prev { width: 100%; height: 54px; border-radius: 11px; }
+  .swatch.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
+  .swatch small { color: var(--text-3); font-size: 11.5px; font-weight: 400; }
 </style>
 </head>
 <body>
@@ -343,7 +359,7 @@
         </div>
       </div>
       <button id="refresh" class="icon-btn" title="Refresh" hidden>↻</button>
-      <button id="connect-btn" class="icon-btn" title="Connection settings" aria-label="Connection settings">⚙︎</button>
+      <button id="connect-btn" class="icon-btn" title="Settings" aria-label="Settings">⚙︎</button>
       <a id="sheetlink" class="icon-btn" target="_blank" rel="noopener" title="Open the Google Sheet">↗</a>
     </div>
   </div>
@@ -442,7 +458,7 @@
   <div class="fgrid">
     <label class="full">Gig / event title<input name="title" required></label>
     <label>Work date<input type="date" name="date" data-today required></label>
-    <label>Pay date (expected or actual)<input type="date" name="pay" data-today required></label>
+    <label>Pay date<input type="date" name="pay" data-today required></label>
     <label>Client / source<input name="client" list="opt-clients" required></label>
     <label>Pay type<input name="type" list="opt-paytypes" placeholder="Flex, Hourly, Day Rate…"></label>
     <label>Expected amount ($)<input name="expected" type="number" step="0.01" min="0" required></label>
@@ -487,6 +503,18 @@
   <div class="factions"><span class="ferr"></span><button type="button" class="plain cancel">Cancel</button><button type="submit" class="add">Add to sheet</button></div>
 </form></dialog>
 
+<dialog id="dlg-settings"><form id="settings-form">
+  <h3>Settings</h3>
+  <div class="set-label">Theme</div>
+  <div class="swatches" id="swatches"></div>
+  <div id="conn-section">
+    <div class="set-label">Connection</div>
+    <p class="muted" style="margin:-4px 0 12px;font-size:13.5px">Your sheet's data service and key, saved only on this device.</p>
+    <button type="button" class="plain" id="open-connect">Change connection…</button>
+  </div>
+  <div class="factions"><button type="submit" class="add">Done</button></div>
+</form></dialog>
+
 <dialog id="dlg-connect"><form id="connect-form">
   <h3>Connect to your sheet</h3>
   <p class="muted" style="margin:-6px 0 16px;font-size:13.5px;line-height:1.45">Paste the data service URL and key from Apps Script.
@@ -513,24 +541,53 @@ const fmtDate = (s, forceYear) => new Date(s + "T12:00:00").toLocaleDateString("
   { month: "short", day: "numeric", year: forceYear || s.slice(0, 4) !== todayISO().slice(0, 4) ? "numeric" : undefined });
 const fmtAny = s => isISO(s) ? fmtDate(s) : (s ? esc(s) : '<span class="muted">—</span>');
 
-// ---- Liquid background: four colour fields drawn on a ~96px canvas and stretched to fill the screen.
+// ---- Themes: background glows, base gradient, accent and chart colours ----
+// Chart sets are validated for colour-blind separation on dark surfaces (3 slots, all pairs).
+const CHART_DEFAULT = ["#0a84ff", "#d97500", "#1baf7a"], CHART_CLAY = ["#c96442", "#4f8fdb", "#2e9f78"];
+const THEMES = {
+  clay:   { name: "Clay", note: "Warm clay & kraft", base: ["#1f1b17", "#28211b", "#110f0d"], accent: "#c96442", chart: CHART_CLAY,
+            glow: [["201,100,66", .78], ["212,162,127", .52], ["235,219,188", .2], ["150,70,45", .62], ["118,86,150", .26]],
+            nav: ["rgba(32,27,22,.55)", "rgba(24,21,18,.8)"] },
+  liquid: { name: "Liquid", note: "Electric blue & violet", base: ["#0a1440", "#140c38", "#070a22"], accent: "#0a84ff", chart: CHART_DEFAULT,
+            glow: [["0,98,255", .78], ["150,55,255", .72], ["0,190,255", .58], ["255,40,150", .34], ["70,30,230", .7]],
+            nav: ["rgba(10,12,28,.55)", "rgba(8,10,24,.74)"] },
+  sunset: { name: "Sunset", note: "Coral, magenta & amber", base: ["#1d0b1c", "#2a0d22", "#0f0610"], accent: "#e2506a", chart: CHART_DEFAULT,
+            glow: [["255,94,98", .7], ["220,50,140", .6], ["255,160,60", .45], ["120,50,210", .5], ["255,130,110", .28]],
+            nav: ["rgba(30,12,26,.55)", "rgba(22,9,20,.78)"] },
+  ocean:  { name: "Ocean", note: "Teal, emerald & deep blue", base: ["#03181d", "#052329", "#020c10"], accent: "#0f9d8c", chart: CHART_DEFAULT,
+            glow: [["0,170,170", .7], ["0,120,255", .55], ["30,190,120", .45], ["20,50,180", .6], ["120,230,210", .2]],
+            nav: ["rgba(4,22,27,.55)", "rgba(3,17,21,.8)"] },
+};
+const THEME_KEY = "incomeDashboard.theme";
+let THEME = THEMES[(() => { try { return localStorage.getItem(THEME_KEY); } catch (e) { return null; } })()] || THEMES.clay;
+function applyTheme(t) {
+  THEME = t;
+  const r = document.documentElement.style;
+  r.setProperty("--accent", t.accent);
+  r.setProperty("--c1", t.chart[0]); r.setProperty("--c2", t.chart[1]); r.setProperty("--c3", t.chart[2]);
+  r.setProperty("--nav-bg", t.nav[0]); r.setProperty("--nav-bg2", t.nav[1]);
+  r.background = t.base[1];
+  const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = t.base[0];
+  if (window.setBgTheme) window.setBgTheme(t);
+}
+applyTheme(THEME);
+
+// ---- Liquid background: five colour fields drawn on a ~96px canvas and stretched to fill the screen.
 // Tiny canvas = almost no GPU work, so it can run at 60fps (paused when hidden / Reduce Motion).
 (function liquid() {
   const c = document.getElementById("bgc"), ctx = c.getContext("2d", { alpha: false });
   const reduce = matchMedia("(prefers-reduced-motion: reduce)");
-  // Vivid fields: electric blue, violet, cyan, magenta, deep indigo
-  const COL = ["0,98,255", "150,55,255", "0,190,255", "255,40,150", "70,30,230"];
   // [centre x %, centre y %, amp x %, amp y %, speed x, speed y, phase] — two layered waves per axis make the motion organic
   const P = [[14, 10, 26, 20, 1.6e-4, 1.3e-4, 0], [86, 28, 24, 24, 1.2e-4, 1.5e-4, 2.1], [24, 88, 28, 18, 1.4e-4, 1.1e-4, 4.2],
              [70, 70, 30, 26, 0.9e-4, 1.25e-4, 5.3], [82, 105, 22, 22, 1.05e-4, 1.3e-4, 1.3]];
-  const OP = [.78, .72, .58, .34, .7], T0 = 2e5;
+  const T0 = 2e5;
   let id = null, sy = 0, base = null;
   const resize = () => {
     const a = innerWidth / Math.max(1, innerHeight);
     c.width = a >= 1 ? 96 : Math.max(32, Math.round(96 * a));
     c.height = a >= 1 ? Math.max(32, Math.round(96 / a)) : 96;
     base = ctx.createLinearGradient(0, 0, c.width * 0.35, c.height);
-    base.addColorStop(0, "#0a1440"); base.addColorStop(0.45, "#140c38"); base.addColorStop(1, "#070a22");
+    base.addColorStop(0, THEME.base[0]); base.addColorStop(0.45, THEME.base[1]); base.addColorStop(1, THEME.base[2]);
   };
   const draw = t => {
     t += T0;
@@ -542,10 +599,11 @@ const fmtAny = s => isISO(s) ? fmtDate(s) : (s ? esc(s) : '<span class="muted">�
       const x = (p[0] + (Math.sin(t * p[4] + p[6]) * 0.7 + Math.sin(t * p[4] * 2.3 + p[6] * 1.7) * 0.3) * p[2]) / 100 * W;
       const y = (p[1] + (Math.cos(t * p[5] + p[6] * 1.3) * 0.7 + Math.cos(t * p[5] * 1.9 + p[6] * 0.6) * 0.3) * p[3]) / 100 * H - sy * par * (i % 2 ? 0.05 : 0.025);
       const r = R * (0.92 + 0.18 * Math.sin(t * p[4] * 1.7 + p[6]));
-      const a = Math.min(1, OP[i] * (0.78 + 0.32 * Math.sin(t * p[5] * 2.2 + p[6] * 2)));
+      const [col, op] = THEME.glow[i];
+      const a = Math.min(1, op * (0.78 + 0.32 * Math.sin(t * p[5] * 2.2 + p[6] * 2)));
       const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-      g.addColorStop(0, `rgba(${COL[i]},${a})`); g.addColorStop(0.32, `rgba(${COL[i]},${a * 0.6})`);
-      g.addColorStop(0.64, `rgba(${COL[i]},${a * 0.24})`); g.addColorStop(1, `rgba(${COL[i]},0)`);
+      g.addColorStop(0, `rgba(${col},${a})`); g.addColorStop(0.32, `rgba(${col},${a * 0.6})`);
+      g.addColorStop(0.64, `rgba(${col},${a * 0.24})`); g.addColorStop(1, `rgba(${col},0)`);
       ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     });
   };
@@ -556,6 +614,7 @@ const fmtAny = s => isISO(s) ? fmtDate(s) : (s ? esc(s) : '<span class="muted">�
   if (reduce.addEventListener) reduce.addEventListener("change", () => reduce.matches ? stop() : start());
   addEventListener("scroll", () => { sy = scrollY; if (!id) draw(performance.now()); }, { passive: true });
   addEventListener("resize", () => { resize(); draw(performance.now()); });
+  window.setBgTheme = () => { resize(); draw(performance.now()); };
   resize(); draw(performance.now()); start();
 })();
 
@@ -1216,7 +1275,26 @@ $("connect-form").onsubmit = async ev => {
 $("connect-cancel").onclick = () => $("dlg-connect").close();
 $("forget-btn").onclick = () => { localStorage.removeItem(CFG_KEY); location.reload(); };
 $("dlg-connect").addEventListener("cancel", e => { if (!STATE.T) e.preventDefault(); });   // can't dismiss before first connect
-$("connect-btn").onclick = () => openConnect();
+function openSettings() {
+  const sw = $("swatches");
+  sw.innerHTML = Object.entries(THEMES).map(([k, t]) => {
+    const g = t.glow.slice(0, 3).map(([c], i) => `radial-gradient(circle at ${[20, 80, 45][i]}% ${[25, 35, 90][i]}%, rgb(${c}) 0%, transparent 65%)`).join(",");
+    return `<button type="button" class="swatch ${t === THEME ? "on" : ""}" data-t="${k}">
+      <span class="chip-prev" style="background:${g},linear-gradient(160deg,${t.base[0]},${t.base[2]})"></span>
+      <span>${t.name}<br><small>${t.note}</small></span></button>`;
+  }).join("");
+  sw.querySelectorAll(".swatch").forEach(b => b.onclick = () => {
+    applyTheme(THEMES[b.dataset.t]);
+    try { localStorage.setItem(THEME_KEY, b.dataset.t); } catch (e) {}
+    sw.querySelectorAll(".swatch").forEach(x => x.classList.toggle("on", x === b));
+    if (STATE.T) render();   // redraw charts with the theme's colours
+  });
+  $("conn-section").hidden = !REMOTE;
+  $("dlg-settings").showModal();
+}
+$("settings-form").onsubmit = e => { e.preventDefault(); $("dlg-settings").close(); };
+$("open-connect").onclick = () => { $("dlg-settings").close(); openConnect(); };
+$("connect-btn").onclick = () => openSettings();
 
 function load() {
   const b = $("refresh");
@@ -1239,7 +1317,7 @@ function load() {
 }
 $("refresh").onclick = load;
 
-if (!REMOTE) { $("connect-btn").hidden = true; render(window.TRACKER); }
+if (!REMOTE) { render(window.TRACKER); }
 else if (!getCfg()) { document.body.classList.add("loading"); $("asof").textContent = "Not connected yet"; openConnect(); }
 else load();
 </script>
