@@ -468,8 +468,8 @@
   <p class="muted" style="margin:-6px 0 16px;font-size:13.5px;line-height:1.45">Paste the data service URL and key from Apps Script.
     They're saved only on this device. Nothing is stored on GitHub.</p>
   <div class="fgrid">
-    <label class="full">Data service URL<input name="url" type="url" required placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" spellcheck="false"></label>
-    <label class="full">Key<input name="key" type="password" required autocomplete="off" spellcheck="false"></label>
+    <label class="full">Data service URL<input name="url" type="url" required placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
+    <label class="full">Key<input name="key" type="password" required autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="64 characters, letters a–f and numbers"></label>
   </div>
   <div class="factions"><button type="button" class="plain" id="forget-btn">Forget on this device</button><span class="ferr"></span>
     <button type="button" class="plain" id="connect-cancel">Cancel</button><button type="submit" class="add">Connect</button></div>
@@ -1103,7 +1103,11 @@ function openConnect(msg) {
 $("connect-form").onsubmit = async ev => {
   ev.preventDefault();
   const f = ev.target, err = f.querySelector(".ferr"), btn = f.querySelector("button[type=submit]");
-  const url = f.elements.url.value.trim(), key = f.elements.key.value.trim();
+  const url = f.elements.url.value.trim().replace(/\s+/g, "");
+  // Keys are 64 hex characters: pull them out of whatever was pasted (extra words, spaces, line breaks, capitals)
+  const raw = f.elements.key.value, compact = raw.replace(/\s+/g, ""), found = compact.match(/[0-9a-fA-F]{64}/);
+  const key = (found ? found[0] : compact).toLowerCase();
+  if (!found) { err.textContent = `That key has ${compact.length} characters. It should be 64 (letters a–f and numbers). Copy it again from the Apps Script Execution log.`; return; }
   if (!URL_OK.test(url)) { err.textContent = "That should be an Apps Script web app URL ending in /exec."; return; }
   btn.disabled = true; btn.textContent = "Connecting…"; err.textContent = "";
   const prev = localStorage.getItem(CFG_KEY);
