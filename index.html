@@ -670,7 +670,15 @@ function countUp(container) {
 // ---- Chart helpers ----
 const MODES = (() => { const d = { income: "bars", clients: "donut", taxes: "split" };
   try { return Object.assign(d, JSON.parse(localStorage.getItem("chartModes") || "{}")); } catch (e) { return d; } })();
-function setMode(chart, m) { MODES[chart] = m; try { localStorage.setItem("chartModes", JSON.stringify(MODES)); } catch (e) {} render(); }
+function syncSeg(g) { g.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.m === MODES[g.dataset.chart])); updateThumb(g); }
+function setMode(chart, m) {
+  if (MODES[chart] === m) return;
+  MODES[chart] = m;
+  try { localStorage.setItem("chartModes", JSON.stringify(MODES)); } catch (e) {}
+  syncSeg(document.querySelector(`.seg[data-chart="${chart}"]`));
+  hideTip();
+  if (STATE.charts && STATE.charts[chart]) STATE.charts[chart](); else render();
+}
 document.querySelectorAll(".seg[data-chart] button").forEach(b => b.onclick = () => setMode(b.parentElement.dataset.chart, b.dataset.m));
 const niceStep = x => { const e = Math.pow(10, Math.floor(Math.log10(x || 1))), f = x / e; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * e; };
 const fmtK = v => v >= 1000 ? "$" + (+(v / 1000).toFixed(1)) + "k" : "$" + Math.round(v);
@@ -784,6 +792,7 @@ function render(T) {
   }
   let cr = 0, ct = 0;
   mData.forEach(d => { cr += d.recv; ct += d.recv + d.pend; d.cumRecv = cr; d.cumTotal = ct; });
+  function drawIncome() {
   const incMode = MODES.income;
   const legendNames = { bars: ["Received", "Not yet paid"], trend: ["Received", "Expected incl. not yet paid"], cumulative: ["Received so far", "Projected"] }[incMode];
   $("inc-legend").innerHTML = `<span><span class="sw" style="background:var(--c1)"></span>${legendNames[0]}</span>
@@ -868,6 +877,8 @@ function render(T) {
   }
   drawMonthly();
   window.onresize = () => drawMonthly(true);
+  }
+  drawIncome();
 
   // Clients (Donut / Bars)
   $("clients-title").textContent = `Where it comes from · ${Y}`;
@@ -875,6 +886,7 @@ function render(T) {
   yr.forEach(r => { byClient[r.client] = (byClient[r.client] || 0) + r.amount; });
   const clients = Object.entries(byClient).sort((a, b) => b[1] - a[1]);
   const pct = v => Math.round(v / (projected || 1) * 100);
+  function drawClients() {
   if (!clients.length) $("clients").innerHTML = '<div class="muted">Nothing booked yet.</div>';
   else if (MODES.clients === "donut") {
     // max 3 coloured slices (palette validated for 3); the rest fold into "Other"
@@ -908,6 +920,8 @@ function render(T) {
         <div class="bar-track"><div class="bar-fill" style="width:${(v / cmax * 100).toFixed(1)}%"></div></div>
         <span class="num">${money(v)} <span class="muted">${pct(v)}%</span></span></div>`).join("");
   }
+  }
+  drawClients();
   const beat = recvY.filter(r => r.act > r.exp).length;
   $("bonus").innerHTML = recvY.length ? `Paid <b class="up">${money(sum(recvY, r => r.act - r.exp))}</b> more than expected — ${beat} of ${recvY.length} payments came in higher.` : "";
 
@@ -932,6 +946,7 @@ function render(T) {
   const tx = (T.taxes || {})[Y];
   $("tax-title").textContent = `Taxes · ${Y}`;
   const placeholder = S.notes && /update/i.test(S.notes) ? `<div class="foot">Uses placeholder ${Y} tax figures. Update them on the Settings tab.</div>` : "";
+  function drawTaxes() {
   if (!tx) $("taxes").innerHTML = `<div class="muted">No ${Y} column on the Tax Summary tab yet.</div>`;
   else if (!tx.grossProjected) $("taxes").innerHTML = `<div class="muted">No ${Y} income yet.</div>`;
   else {
@@ -966,7 +981,10 @@ function render(T) {
         + `<div class="foot">Deductions save you about <b class="up">${money(tx.saved)}</b>.</div>${placeholder}`;
     }
   }
-  document.querySelectorAll(".seg[data-chart]").forEach(g => { g.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.m === MODES[g.dataset.chart])); updateThumb(g); });
+  }
+  drawTaxes();
+  STATE.charts = { income: drawIncome, clients: drawClients, taxes: drawTaxes };
+  document.querySelectorAll(".seg[data-chart]").forEach(syncSeg);
 
   // Savings
   const sv = T.savings;
@@ -1309,7 +1327,7 @@ function openSettings() {
     applyTheme(THEMES[b.dataset.t]);
     try { localStorage.setItem(THEME_KEY, b.dataset.t); } catch (e) {}
     sw.querySelectorAll(".swatch").forEach(x => x.classList.toggle("on", x === b));
-    if (STATE.T) render();   // redraw charts with the theme's colours
+    // charts use CSS colour variables, so they recolour without being redrawn
   });
   $("conn-section").hidden = !REMOTE;
   $("dlg-settings").showModal();
