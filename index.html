@@ -298,6 +298,25 @@
   @media (max-width: 600px) {
     input, select { font-size: 16px; }
     dialog form { padding: 20px 18px; }
+    /* Controls live in a floating Liquid Glass bar at the bottom, within thumb reach */
+    .nav-actions.dock { position: fixed; z-index: 40; left: 50%; bottom: calc(12px + env(safe-area-inset-bottom));
+      transform: translateX(-50%); display: flex; align-items: center; gap: 6px; padding: 6px; border-radius: 999px;
+      max-width: calc(100vw - 20px);
+      background: linear-gradient(180deg, rgba(255,255,255,.2), rgba(255,255,255,.07));
+      -webkit-backdrop-filter: blur(22px) saturate(190%) brightness(1.08); backdrop-filter: blur(22px) saturate(190%) brightness(1.08);
+      border: 1px solid rgba(255,255,255,.3);
+      box-shadow: inset 0 1px 1px rgba(255,255,255,.55), inset 0 -1px 1px rgba(255,255,255,.12), 0 12px 34px rgba(0,0,0,.38);
+      animation: dockIn .6s var(--spring) backwards; }
+    .nav-actions.dock .seg { background: rgba(255,255,255,.1); border-radius: 999px; padding: 3px; }
+    .nav-actions.dock .seg .thumb { border-radius: 999px; top: 3px; bottom: 3px; background: rgba(255,255,255,.26); }
+    .nav-actions.dock .seg button { padding: 7px 12px; font-size: 14px; border-radius: 999px; }
+    .nav-actions.dock .icon-btn { width: 40px; height: 40px; font-size: 17px; background: rgba(255,255,255,.1); }
+    .nav-actions.dock button.add { padding: 10px 15px; font-size: 14.5px; }
+    .nav-actions.dock .menu { top: auto; bottom: calc(100% + 12px); transform-origin: bottom right; }
+    @keyframes dockIn { from { opacity: 0; transform: translateX(-50%) translateY(24px) scale(.94); } }
+    .toast { bottom: calc(80px + env(safe-area-inset-bottom)); }
+    .wrap { padding-bottom: calc(110px + env(safe-area-inset-bottom)); }
+    .nav-inner { min-height: 0; }
     .fgrid { gap: 10px; }
     dialog h3 { font-size: 19px; }
     .table-scroll { margin: 0; overflow: visible; }
@@ -348,7 +367,7 @@
       <h1>Income</h1>
       <div class="sub" id="asof"></div>
     </div>
-    <div class="nav-actions">
+    <div class="nav-actions" id="nav-actions">
       <div class="seg" id="years" role="tablist" aria-label="Year"></div>
       <div class="add-wrap">
         <button class="add" id="add-btn" aria-haspopup="menu" aria-expanded="false">+ Add</button>
@@ -545,6 +564,9 @@ const fmtAny = s => isISO(s) ? fmtDate(s) : (s ? esc(s) : '<span class="muted">â
 // Chart sets are validated for colour-blind separation on dark surfaces (3 slots, all pairs).
 const CHART_DEFAULT = ["#0a84ff", "#d97500", "#1baf7a"], CHART_CLAY = ["#c96442", "#4f8fdb", "#2e9f78"];
 const THEMES = {
+  vivid:  { name: "Vivid", note: "Pink, orange, blue & purple", base: ["#1b0a3c", "#2a0b4c", "#0b0622"], accent: "#2f6bff", chart: CHART_DEFAULT,
+            glow: [["255,45,125", .88], ["255,140,20", .72], ["30,90,255", .9], ["150,40,255", .8], ["0,200,255", .42]],
+            nav: ["rgba(26,10,48,.5)", "rgba(20,8,38,.78)"] },
   clay:   { name: "Clay", note: "Warm clay & kraft", base: ["#1f1b17", "#28211b", "#110f0d"], accent: "#c96442", chart: CHART_CLAY,
             glow: [["201,100,66", .78], ["212,162,127", .52], ["235,219,188", .2], ["150,70,45", .62], ["118,86,150", .26]],
             nav: ["rgba(32,27,22,.55)", "rgba(24,21,18,.8)"] },
@@ -559,7 +581,7 @@ const THEMES = {
             nav: ["rgba(4,22,27,.55)", "rgba(3,17,21,.8)"] },
 };
 const THEME_KEY = "incomeDashboard.theme";
-let THEME = THEMES[(() => { try { return localStorage.getItem(THEME_KEY); } catch (e) { return null; } })()] || THEMES.clay;
+let THEME = THEMES[(() => { try { return localStorage.getItem(THEME_KEY); } catch (e) { return null; } })()] || THEMES.vivid;
 function applyTheme(t) {
   THEME = t;
   const r = document.documentElement.style;
@@ -578,8 +600,8 @@ applyTheme(THEME);
   const c = document.getElementById("bgc"), ctx = c.getContext("2d", { alpha: false });
   const reduce = matchMedia("(prefers-reduced-motion: reduce)");
   // [centre x %, centre y %, amp x %, amp y %, speed x, speed y, phase] â€” two layered waves per axis make the motion organic
-  const P = [[14, 10, 26, 20, 1.6e-4, 1.3e-4, 0], [86, 28, 24, 24, 1.2e-4, 1.5e-4, 2.1], [24, 88, 28, 18, 1.4e-4, 1.1e-4, 4.2],
-             [70, 70, 30, 26, 0.9e-4, 1.25e-4, 5.3], [82, 105, 22, 22, 1.05e-4, 1.3e-4, 1.3]];
+  const P = [[14, 10, 26, 20, 2.9e-4, 2.35e-4, 0], [86, 28, 24, 24, 2.15e-4, 2.7e-4, 2.1], [24, 88, 28, 18, 2.5e-4, 2.0e-4, 4.2],
+             [70, 70, 30, 26, 1.65e-4, 2.25e-4, 5.3], [82, 105, 22, 22, 1.9e-4, 2.35e-4, 1.3]];
   const T0 = 2e5;
   let id = null, sy = 0, base = null;
   const resize = () => {
@@ -1316,6 +1338,18 @@ function load() {
     .finally(() => { b.disabled = false; });
 }
 $("refresh").onclick = load;
+
+// Phones: controls float at the bottom; wider screens: back in the top bar
+(function dock() {
+  const mq = matchMedia("(max-width: 600px)"), el = $("nav-actions"), home = el.parentElement;
+  const place = () => {
+    if (mq.matches && el.parentElement !== document.body) { document.body.appendChild(el); el.classList.add("dock"); }
+    else if (!mq.matches && el.parentElement !== home) { home.appendChild(el); el.classList.remove("dock"); }
+    updateThumb($("years"));
+  };
+  if (mq.addEventListener) mq.addEventListener("change", place); else mq.addListener(place);
+  place();
+})();
 
 if (!REMOTE) { render(window.TRACKER); }
 else if (!getCfg()) { document.body.classList.add("loading"); $("asof").textContent = "Not connected yet"; openConnect(); }
