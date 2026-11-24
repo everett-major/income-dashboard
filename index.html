@@ -42,7 +42,7 @@
   /* ============ Base ============ */
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
-  html { background: var(--bg); }
+  html { background: var(--bg); -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   html, body { overflow-x: clip; max-width: 100%; }
   main, .nav-inner, .grid > * { min-width: 0; }
   .card-head { flex-wrap: wrap; row-gap: 10px; }
@@ -126,8 +126,13 @@
   .controls input { flex: 1; min-width: 180px; }
   select option { background: #2c2c2e; }
 
-  .table-scroll { max-height: 460px; overflow: auto; margin: 0 -8px; }
-  .table-scroll.short { max-height: 360px; }
+  .table-scroll { overflow-x: auto; margin: 0 -8px; }   /* no inner vertical scrolling: the page scrolls */
+  tbody tr.edit { cursor: pointer; }
+  td.m-amt { display: none; }
+  .more { display: block; width: 100%; margin-top: 12px; border: 0; background: var(--fill-2); color: var(--text-2);
+    font: 500 13.5px var(--font); padding: 10px; border-radius: 14px; cursor: pointer; }
+  .more:hover { background: var(--fill); color: var(--text); }
+  .edit-hint { color: var(--text-3); font-size: 12px; }
   table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   th { text-align: left; font-weight: 500; color: var(--text-3); font-size: 12px; padding: 8px; border-bottom: 1px solid var(--sep); cursor: pointer; user-select: none; white-space: nowrap; }
   td { padding: 10px 8px; border-bottom: 1px solid var(--sep); }
@@ -286,6 +291,22 @@
   }
   /* Phone layout (kept last so it wins) */
   @media (max-width: 600px) {
+    input, select { font-size: 16px; }
+    .table-scroll { margin: 0; overflow: visible; }
+    table, tbody { display: block; width: 100%; }
+    thead { display: none; }
+    tbody tr { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 10px; row-gap: 3px;
+      padding: 12px 2px; border-bottom: 1px solid var(--sep); }
+    tbody tr:last-child { border-bottom: 0; }
+    tbody td { display: block; padding: 0; border: 0; background: none !important; }
+    td.d-only { display: none; }
+    td.c-main { order: 1; flex: 1 1 calc(100% - 130px); min-width: 0; font-size: 15px; font-weight: 500; }
+    td.m-amt, td.c-tot { display: block; order: 2; flex: 0 0 120px; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+    td.c-sub { order: 3; font-size: 12.5px; color: var(--text-3); }
+    td.c-sub ~ td.c-sub::before { content: "·"; margin-right: 10px; color: var(--text-3); }
+    tbody tr.edit:active { background: var(--fill-2); border-radius: 12px; }
+  }
+  @media (max-width: 600px) {
     .wrap { padding: 16px 14px 100px; }
     .nav-inner { padding: 12px 14px; }
     .grid { gap: 12px; margin-bottom: 12px; }
@@ -365,19 +386,21 @@
   <section class="card glass" style="margin-bottom:16px">
     <div class="card-head"><h2>Itemized expenses</h2><button class="add live-only" data-open="expense" hidden>+ Add expense</button></div>
     <div class="chips" id="exp-cats"></div>
-    <div class="table-scroll short"><table>
+    <div class="table-scroll"><table>
       <thead><tr><th>Date</th><th>Category</th><th>Item</th><th>Vendor</th><th>Paid with</th><th class="num">Deduction</th></tr></thead>
       <tbody id="exp-rows"></tbody>
     </table></div>
+    <button class="more" id="exp-more" hidden></button>
   </section>
 
   <section class="card glass" style="margin-bottom:16px">
     <div class="card-head"><h2>Mileage</h2><button class="add live-only" data-open="mileage" hidden>+ Add trip</button></div>
     <div class="chips" id="mile-sum"></div>
-    <div class="table-scroll short"><table>
+    <div class="table-scroll"><table>
       <thead><tr><th>Date</th><th>Trip</th><th class="num">Miles</th><th class="num">Rate</th><th class="num">Deduction</th></tr></thead>
       <tbody id="mile-rows"></tbody>
     </table></div>
+    <button class="more" id="mile-more" hidden></button>
   </section>
 
   <div class="section-title" id="inc-title">Income entries</div>
@@ -403,6 +426,7 @@
         <tbody id="rows"></tbody>
       </table>
     </div>
+    <button class="more" id="inc-more" hidden></button>
     <div class="foot" id="tablefoot"></div>
   </section>
 </main>
@@ -414,7 +438,7 @@
 <datalist id="opt-statuses"></datalist><datalist id="opt-expcats"></datalist><datalist id="opt-expmethods"></datalist>
 
 <dialog id="dlg-income"><form data-kind="income">
-  <h3>Add income</h3>
+  <h3 data-add="Add income" data-edit="Edit income">Add income</h3>
   <div class="fgrid">
     <label class="full">Gig / event title<input name="title" required></label>
     <label>Work date<input type="date" name="date" data-today required></label>
@@ -431,7 +455,7 @@
 </form></dialog>
 
 <dialog id="dlg-mileage"><form data-kind="mileage">
-  <h3>Add a trip</h3>
+  <h3 data-add="Add a trip" data-edit="Edit trip">Add a trip</h3>
   <div class="fgrid">
     <label class="full">Trip description<input name="desc" required placeholder="XRS Loews Hotel (KC MO)"></label>
     <label>Date<input type="date" name="date" data-today required></label>
@@ -444,7 +468,7 @@
 </form></dialog>
 
 <dialog id="dlg-expense"><form data-kind="expense">
-  <h3>Add an expense</h3>
+  <h3 data-add="Add an expense" data-edit="Edit expense">Add an expense</h3>
   <div class="fgrid">
     <label class="full">Item / description<input name="desc" required></label>
     <label>Date<input type="date" name="date" data-today></label>
@@ -494,17 +518,19 @@ const fmtAny = s => isISO(s) ? fmtDate(s) : (s ? esc(s) : '<span class="muted">�
 (function liquid() {
   const c = document.getElementById("bgc"), ctx = c.getContext("2d", { alpha: false });
   const reduce = matchMedia("(prefers-reduced-motion: reduce)");
-  const COL = ["10,92,255", "138,63,252", "15,163,194", "59,47,214"];
-  // [centre x %, centre y %, amp x %, amp y %, speed x, speed y, phase]
-  const P = [[12, 8, 24, 18, 1.75e-4, 1.45e-4, 0], [88, 30, 22, 22, 1.25e-4, 1.6e-4, 2.1], [22, 92, 26, 16, 1.5e-4, 1.15e-4, 4.2], [80, 100, 20, 20, 1.1e-4, 1.35e-4, 1.3]];
-  const OP = [.55, .55, .55, .6], T0 = 2e5;
+  // Vivid fields: electric blue, violet, cyan, magenta, deep indigo
+  const COL = ["0,98,255", "150,55,255", "0,190,255", "255,40,150", "70,30,230"];
+  // [centre x %, centre y %, amp x %, amp y %, speed x, speed y, phase] — two layered waves per axis make the motion organic
+  const P = [[14, 10, 26, 20, 1.6e-4, 1.3e-4, 0], [86, 28, 24, 24, 1.2e-4, 1.5e-4, 2.1], [24, 88, 28, 18, 1.4e-4, 1.1e-4, 4.2],
+             [70, 70, 30, 26, 0.9e-4, 1.25e-4, 5.3], [82, 105, 22, 22, 1.05e-4, 1.3e-4, 1.3]];
+  const OP = [.78, .72, .58, .34, .7], T0 = 2e5;
   let id = null, sy = 0, base = null;
   const resize = () => {
     const a = innerWidth / Math.max(1, innerHeight);
     c.width = a >= 1 ? 96 : Math.max(32, Math.round(96 * a));
     c.height = a >= 1 ? Math.max(32, Math.round(96 / a)) : 96;
     base = ctx.createLinearGradient(0, 0, c.width * 0.35, c.height);
-    base.addColorStop(0, "#0b1236"); base.addColorStop(0.45, "#110b2c"); base.addColorStop(1, "#060818");
+    base.addColorStop(0, "#0a1440"); base.addColorStop(0.45, "#140c38"); base.addColorStop(1, "#070a22");
   };
   const draw = t => {
     t += T0;
@@ -513,10 +539,10 @@ const fmtAny = s => isISO(s) ? fmtDate(s) : (s ? esc(s) : '<span class="muted">�
     ctx.fillStyle = base; ctx.fillRect(0, 0, W, H);
     ctx.globalCompositeOperation = "screen";
     P.forEach((p, i) => {
-      const x = (p[0] + Math.sin(t * p[4] + p[6]) * p[2]) / 100 * W;
-      const y = (p[1] + Math.cos(t * p[5] + p[6] * 1.3) * p[3]) / 100 * H - sy * par * (i % 2 ? 0.05 : 0.025);
-      const r = R * (1 + 0.14 * Math.sin(t * p[4] * 1.7 + p[6]));
-      const a = OP[i] * (0.72 + 0.38 * Math.sin(t * p[5] * 2.2 + p[6] * 2));
+      const x = (p[0] + (Math.sin(t * p[4] + p[6]) * 0.7 + Math.sin(t * p[4] * 2.3 + p[6] * 1.7) * 0.3) * p[2]) / 100 * W;
+      const y = (p[1] + (Math.cos(t * p[5] + p[6] * 1.3) * 0.7 + Math.cos(t * p[5] * 1.9 + p[6] * 0.6) * 0.3) * p[3]) / 100 * H - sy * par * (i % 2 ? 0.05 : 0.025);
+      const r = R * (0.92 + 0.18 * Math.sin(t * p[4] * 1.7 + p[6]));
+      const a = Math.min(1, OP[i] * (0.78 + 0.32 * Math.sin(t * p[5] * 2.2 + p[6] * 2)));
       const g = ctx.createRadialGradient(x, y, 0, x, y, r);
       g.addColorStop(0, `rgba(${COL[i]},${a})`); g.addColorStop(0.32, `rgba(${COL[i]},${a * 0.6})`);
       g.addColorStop(0.64, `rgba(${COL[i]},${a * 0.24})`); g.addColorStop(1, `rgba(${COL[i]},0)`);
@@ -581,7 +607,7 @@ const arc = (cx, cy, r, a0, a1) => {
   return `M${x0.toFixed(2)},${y0.toFixed(2)} A${r},${r} 0 ${a1 - a0 > Math.PI ? 1 : 0} 1 ${x1.toFixed(2)},${y1.toFixed(2)}`;
 };
 
-const STATE = { T: null, year: null };
+const STATE = { T: null, year: null, open: {} };
 let sortKey = "date", sortDir = -1;
 const tip = $("tip");
 const showTip = (e, html) => { tip.innerHTML = html; tip.classList.add("show");
@@ -627,10 +653,11 @@ function render(T) {
   }
   $("exp-year").innerHTML = years.map(y => `<option ${y === Y ? "selected" : ""}>${y}</option>`).join("");
 
-  const rows = T.income.map(([date, title, client, type, exp, act, method, status, pay]) => {
+  const rows = T.income.map(([date, title, client, type, exp, act, method, status, pay, row, notes, rawClient], idx) => {
     const received = act !== null;
     const state = received ? "received" : (pay < today ? "overdue" : "upcoming");
-    return { date, title, client, type, exp, act, method, status, pay, received, state, amount: received ? act : exp };
+    return { date, title, client, type, exp, act, method, status, pay, received, state, amount: received ? act : exp,
+      row, notes: notes || "", rawClient: rawClient || client, idx };
   });
   const yr = rows.filter(r => r.pay.startsWith(YS));
   const overdue = rows.filter(r => r.state === "overdue");
@@ -888,23 +915,46 @@ function render(T) {
   exps.forEach(e => cats[e.category || "Other"] = (cats[e.category || "Other"] || 0) + e.amount);
   $("exp-cats").innerHTML = Object.entries(cats).sort((a, b) => b[1] - a[1])
     .map(([c, v]) => `<span class="chip">${esc(c)} <b>${money2(v)}</b></span>`).join("");
-  $("exp-rows").innerHTML = exps.length ? exps.slice().sort(byDateDesc).map(e => {
-    const how = e.value != null && e.rate != null
-      ? `<div class="subline">${e.rate <= 1 ? Math.round(e.rate * 100) + "% of " + money2(e.value) : e.value + " " + esc(e.label || "") + " × " + money2(e.rate)}</div>` : "";
-    const link = /^https?:\/\//.test(e.receipt) ? ` <a href="${esc(e.receipt)}" target="_blank" rel="noopener" title="Receipt">↗</a>` : "";
-    return `<tr><td>${fmtAny(e.date)}</td><td class="muted">${esc(e.category)}</td><td>${esc(e.desc)}${link}</td>
-      <td>${esc(e.merchant)}</td><td class="muted">${esc(e.method)}</td><td class="num">${money2(e.amount)}${how}</td></tr>`;
-  }).join("") + `<tr><td colspan="5"><b>Total</b></td><td class="num"><b>${money2(expTotal)}</b></td></tr>`
-    : `<tr><td colspan="6" class="muted">No ${Y} expenses yet.</td></tr>`;
+  const LIMIT = 8;
+  function moreBtn(id, key, total, redraw) {
+    const b = $(id), open = !!STATE.open[key];
+    b.hidden = total <= LIMIT;
+    b.textContent = open ? "Show less" : `Show all ${total}`;
+    b.onclick = () => { STATE.open[key] = !open; redraw(); if (open) b.closest("section").scrollIntoView({ block: "nearest", behavior: "smooth" }); };
+  }
+  function bindEdit(tbody, list, kind) {
+    tbody.querySelectorAll("tr.edit").forEach(tr => tr.onclick = e => { if (!e.target.closest("a")) openForm(kind, list[+tr.dataset.i]); });
+  }
+  function drawExp() {
+    const all = exps.slice().sort(byDateDesc), list = STATE.open.exp ? all : all.slice(0, LIMIT);
+    $("exp-rows").innerHTML = all.length ? list.map((e, i) => {
+      const how = e.value != null && e.rate != null
+        ? `<div class="subline">${e.rate <= 1 ? Math.round(e.rate * 100) + "% of " + money2(e.value) : e.value + " " + esc(e.label || "") + " × " + money2(e.rate)}</div>` : "";
+      const link = /^https?:\/\//.test(e.receipt) ? ` <a href="${esc(e.receipt)}" target="_blank" rel="noopener" title="Receipt">↗</a>` : "";
+      return `<tr class="edit" data-i="${i}" title="Edit"><td class="c-sub">${fmtAny(e.date)}</td><td class="muted c-sub">${esc(e.category)}</td><td class="c-main">${esc(e.desc)}${link}</td>
+        <td class="c-sub">${esc(e.merchant)}</td><td class="muted d-only">${esc(e.method)}</td><td class="num d-only">${money2(e.amount)}${how}</td><td class="m-amt">${money2(e.amount)}</td></tr>`;
+    }).join("") + `<tr><td colspan="5" class="c-main"><b>Total</b></td><td class="num c-tot"><b>${money2(expTotal)}</b></td></tr>`
+      : `<tr><td colspan="6" class="muted c-main">No ${Y} expenses yet.</td></tr>`;
+    bindEdit($("exp-rows"), list, "expense");
+    moreBtn("exp-more", "exp", all.length, drawExp);
+  }
+  drawExp();
   const recurring = mil.filter(r => /weekly|recurring/i.test(r.desc)), trips = mil.filter(r => !recurring.includes(r));
   $("mile-sum").innerHTML = (mil.length ? [[`${trips.length} gig trips`, sum(trips, r => r.amount)]] : [])
     .concat(recurring.map(r => [esc(r.desc), r.amount]))
     .map(([l, v]) => `<span class="chip">${l} <b>${money2(v)}</b></span>`).join("");
-  $("mile-rows").innerHTML = mil.length ? mil.slice().sort(byDateDesc).map(r =>
-    `<tr><td>${fmtAny(r.date)}</td><td>${esc(r.desc)}</td><td class="num">${r.miles != null ? r.miles.toLocaleString() : ""}</td>
-      <td class="num muted">${r.rate != null ? "$" + r.rate.toFixed(3).replace(/0$/, "") : ""}</td><td class="num">${money2(r.amount)}</td></tr>`).join("")
-    + `<tr><td colspan="2"><b>Total</b></td><td class="num"><b>${Math.round(miles).toLocaleString()}</b></td><td></td><td class="num"><b>${money2(mileTotal)}</b></td></tr>`
-    : `<tr><td colspan="5" class="muted">No ${Y} trips yet.</td></tr>`;
+  function drawMile() {
+    const all = mil.slice().sort(byDateDesc), list = STATE.open.mile ? all : all.slice(0, LIMIT);
+    $("mile-rows").innerHTML = all.length ? list.map((r, i) =>
+      `<tr class="edit" data-i="${i}" title="Edit"><td class="c-sub">${fmtAny(r.date)}</td><td class="c-main">${esc(r.desc)}</td>
+        <td class="num c-sub">${r.miles != null ? r.miles.toLocaleString() + "<span class=\"m-unit\"> mi</span>" : ""}</td>
+        <td class="num muted d-only">${r.rate != null ? "$" + r.rate.toFixed(3).replace(/0$/, "") : ""}</td><td class="num d-only">${money2(r.amount)}</td><td class="m-amt">${money2(r.amount)}</td></tr>`).join("")
+      + `<tr><td colspan="2" class="c-main"><b>Total</b> <span class="muted">· ${Math.round(miles).toLocaleString()} mi</span></td><td class="num d-only"></td><td class="d-only"></td><td class="num c-tot"><b>${money2(mileTotal)}</b></td></tr>`
+      : `<tr><td colspan="5" class="muted c-main">No ${Y} trips yet.</td></tr>`;
+    bindEdit($("mile-rows"), list, "mileage");
+    moreBtn("mile-more", "mile", all.length, drawMile);
+  }
+  drawMile();
 
   // Income table (selected year, by pay date)
   $("inc-title").textContent = `Income entries · ${Y}`;
@@ -917,14 +967,22 @@ function render(T) {
     const list = yr.filter(r => (!c || r.client === c) && (!st || r.state === st) &&
       (!q || `${r.title} ${r.client} ${r.type} ${r.status} ${r.method}`.toLowerCase().includes(q)))
       .sort((a, b) => { const x = a[sortKey] ?? -1, y = b[sortKey] ?? -1; return (x > y ? 1 : x < y ? -1 : 0) * sortDir; });
-    $("rows").innerHTML = list.map(r => {
+    const filtered = !!(q || c || st), shown = filtered || STATE.open.inc ? list : list.slice(0, 10);
+    $("rows").innerHTML = shown.map((r, i) => {
       const [lbl, col] = stateLabel[r.state], diff = r.received ? r.act - r.exp : 0;
-      return `<tr><td>${fmtDate(r.date)}</td><td>${esc(r.title)}</td><td>${esc(r.client)}</td><td class="muted">${esc(r.type)}</td>
-        <td class="num">${money2(r.exp)}</td>
-        <td class="num">${r.received ? money2(r.act) + (diff ? ` <span class="${diff > 0 ? "up" : "down"}" style="font-size:11px">${diff > 0 ? "+" : ""}${money(diff)}</span>` : "") : '<span class="muted">—</span>'}</td>
-        <td><span class="pill"><span class="dot" style="background:${col}"></span>${lbl}</span></td><td>${fmtDate(r.pay)}</td></tr>`;
-    }).join("") || `<tr><td colspan="8" class="muted">No entries.</td></tr>`;
-    $("tablefoot").textContent = `${list.length} entries · expected ${money2(sum(list, r => r.exp))} · received ${money2(sum(list.filter(r => r.received), r => r.act))}`;
+      return `<tr class="edit" data-i="${i}" title="Edit"><td class="c-sub">${fmtDate(r.date)}</td><td class="c-main">${esc(r.title)}</td><td class="c-sub">${esc(r.client)}</td><td class="muted d-only">${esc(r.type)}</td>
+        <td class="num d-only">${money2(r.exp)}</td>
+        <td class="num d-only">${r.received ? money2(r.act) + (diff ? ` <span class="${diff > 0 ? "up" : "down"}" style="font-size:11px">${diff > 0 ? "+" : ""}${money(diff)}</span>` : "") : '<span class="muted">—</span>'}</td>
+        <td class="c-sub"><span class="pill"><span class="dot" style="background:${col}"></span>${lbl}</span></td><td class="d-only">${fmtDate(r.pay)}</td>
+        <td class="m-amt">${money2(r.received ? r.act : r.exp)}</td></tr>`;
+    }).join("") || `<tr><td colspan="8" class="muted c-main">No entries.</td></tr>`;
+    bindEdit($("rows"), shown, "income");
+    const mb = $("inc-more");
+    mb.hidden = filtered || list.length <= 10;
+    mb.textContent = STATE.open.inc ? "Show less" : `Show all ${list.length}`;
+    mb.onclick = () => { STATE.open.inc = !STATE.open.inc; renderTable(); };
+    $("tablefoot").innerHTML = `${list.length} entries · expected ${money2(sum(list, r => r.exp))} · received ${money2(sum(list.filter(r => r.received), r => r.act))}
+      <span class="edit-hint"> · ${matchMedia("(hover: none)").matches ? "Tap" : "Click"} any row to edit</span>`;
   }
   ["q", "fclient", "fstate"].forEach(id => $(id).oninput = renderTable);
   document.querySelectorAll("th[data-k]").forEach(th => th.onclick = () => {
@@ -959,18 +1017,39 @@ function syncForm(f, changed) {
     f.querySelector(".calc").textContent = p ? "Deduction: " + money2(n(el("value").value) * n(el("rate").value)) : "";
   }
 }
-function openForm(kind) {
+function fillForm(f, kind, r) {
+  const set = (n, v) => { const el = f.elements.namedItem(n); if (!el) return; if (el.type === "checkbox") el.checked = !!v; else el.value = v == null ? "" : v; };
+  if (kind === "income") {
+    set("title", r.title); set("date", r.date); set("pay", r.pay); set("client", r.rawClient); set("type", r.type);
+    set("expected", r.exp); set("actual", r.act); set("method", r.method); set("status", r.status); set("notes", r.notes);
+  } else if (kind === "mileage") {
+    set("desc", r.desc); set("date", isISO(r.date) ? r.date : ""); set("miles", r.miles); set("rate", r.rate); set("category", r.category);
+  } else {
+    const part = r.value != null && r.rate != null;
+    set("desc", r.desc); set("date", isISO(r.date) ? r.date : ""); set("year", r.year); set("category", r.category);
+    set("merchant", r.merchant); set("method", r.method); set("receipt", r.receipt); set("partial", part);
+    set("amount", part ? "" : r.amount); set("value", part ? r.value : ""); set("rate", part ? r.rate : ""); set("label", r.label);
+  }
+}
+function openForm(kind, rec) {
   $("add-menu").hidden = true; $("add-btn").setAttribute("aria-expanded", "false");
   const dlg = $("dlg-" + kind), f = dlg.querySelector("form");
   f.reset(); f.querySelector(".ferr").textContent = "";
-  const today = todayISO();
-  f.querySelectorAll("input[data-today]").forEach(i => i.value = today);
-  if (kind === "mileage") { f.elements.namedItem("miles").value = 30; f.elements.namedItem("rate").value = defaultRate(today); }
-  if (kind === "expense") f.elements.namedItem("year").value = today.slice(0, 4);
+  f._edit = rec || null;
+  const h = f.querySelector("h3"); h.textContent = rec ? h.dataset.edit : h.dataset.add;
+  f.querySelector("button[type=submit]").textContent = rec ? "Save changes" : "Add to sheet";
+  if (rec) fillForm(f, kind, rec);
+  else {
+    const today = todayISO();
+    f.querySelectorAll("input[data-today]").forEach(i => i.value = today);
+    if (kind === "mileage") { f.elements.namedItem("miles").value = 30; f.elements.namedItem("rate").value = defaultRate(today); }
+    if (kind === "expense") f.elements.namedItem("year").value = today.slice(0, 4);
+  }
   syncForm(f);
   dlg.showModal();
 }
 document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => openForm(b.dataset.open));
+const matchOf = (kind, r) => kind === "income" ? { date: r.date, title: r.title } : kind === "mileage" ? { date: r.date, desc: r.desc } : { desc: r.desc };
 document.querySelectorAll("dialog form[data-kind]").forEach(f => {
   const btn = f.querySelector("button[type=submit]");
   f.querySelector(".cancel").onclick = () => f.closest("dialog").close();
@@ -981,30 +1060,43 @@ document.querySelectorAll("dialog form[data-kind]").forEach(f => {
     const data = Object.fromEntries(new FormData(f));
     const partial = f.elements.namedItem("partial");
     if (partial) data.partial = partial.checked;
+    const kind = f.dataset.kind, ed = f._edit;
     if (!REMOTE) {   // local preview: show it on the page only
-      previewAdd(f.dataset.kind, data); f.closest("dialog").close();
-      toast("Preview only: added on this page. The live dashboard saves it to your sheet.");
+      ed ? previewEdit(kind, ed, data) : previewAdd(kind, data); f.closest("dialog").close();
+      toast(ed ? "Preview only: changed on this page. The live dashboard saves it to your sheet."
+               : "Preview only: added on this page. The live dashboard saves it to your sheet.");
       return;
     }
+    if (ed && !ed.row) { f.querySelector(".ferr").textContent = "Editing needs the latest Code.gs. Paste it into Apps Script and deploy a new version."; return; }
     btn.disabled = true; btn.textContent = "Saving…"; f.querySelector(".ferr").textContent = "";
-    const done = () => { btn.disabled = false; btn.textContent = "Add to sheet"; };
-    api("addEntry", { kind: f.dataset.kind, entry: data })
+    const done = () => { btn.disabled = false; btn.textContent = ed ? "Save changes" : "Add to sheet"; };
+    (ed ? api("updateEntry", { kind, row: ed.row, match: matchOf(kind, ed), entry: data }) : api("addEntry", { kind, entry: data }))
       .then(res => { done(); f.closest("dialog").close(); render(res.data); toast(res.message); })
       .catch(err => { done(); f.querySelector(".ferr").textContent = err.message; });
   };
 });
 
 // ---- Preview-only add (the live dashboard writes to the sheet instead) ----
-function previewAdd(kind, d) {
-  const T = STATE.T, n = v => v === "" || v == null ? null : +v;
-  if (kind === "income") T.income.push([d.date, d.title, /^MJH/i.test(d.client) ? "MJH" : /^XRS/i.test(d.client) ? "XRS" : d.client,
-    d.type || "", n(d.expected) || 0, n(d.actual), d.method || "", d.status || "", d.pay || d.date]);
-  if (kind === "mileage") T.deductions.mileage.push({ date: d.date, category: d.category || "Business Mileage", desc: d.desc,
-    miles: n(d.miles), rate: n(d.rate), amount: (n(d.miles) || 0) * (n(d.rate) || 0), year: +d.date.slice(0, 4) });
-  if (kind === "expense") T.deductions.expenses.push({ date: d.date || "", category: d.category || "Purchases", desc: d.desc,
+function previewRecord(kind, d, keep) {
+  const n = v => v === "" || v == null ? null : +v;
+  if (kind === "income") return [d.date, d.title, /^MJH/i.test(d.client) ? "MJH" : /^XRS/i.test(d.client) ? "XRS" : d.client,
+    d.type || "", n(d.expected) || 0, n(d.actual), d.method || "", d.status || "", d.pay || d.date, keep && keep.row, d.notes || "", d.client];
+  if (kind === "mileage") return { date: d.date, category: d.category || "Business Mileage", desc: d.desc,
+    miles: n(d.miles), rate: n(d.rate), amount: (n(d.miles) || 0) * (n(d.rate) || 0), year: +d.date.slice(0, 4), row: keep && keep.row };
+  return { date: d.date || "", category: d.category || "Purchases", desc: d.desc,
     merchant: d.merchant || "", method: d.method || "", receipt: d.receipt || "", value: d.partial ? n(d.value) : null,
     label: d.partial ? d.label : "", rate: d.partial ? n(d.rate) : null,
-    amount: d.partial ? (n(d.value) || 0) * (n(d.rate) || 0) : (n(d.amount) || 0), year: +(d.year || String(d.date).slice(0, 4)) });
+    amount: d.partial ? (n(d.value) || 0) * (n(d.rate) || 0) : (n(d.amount) || 0), year: +(d.year || String(d.date).slice(0, 4)), row: keep && keep.row };
+}
+function previewAdd(kind, d) {
+  const T = STATE.T, rec = previewRecord(kind, d);
+  if (kind === "income") T.income.push(rec); else (kind === "mileage" ? T.deductions.mileage : T.deductions.expenses).push(rec);
+  render();
+}
+function previewEdit(kind, ed, d) {
+  const T = STATE.T;
+  if (kind === "income") T.income[ed.idx] = previewRecord(kind, d, ed);
+  else Object.assign(ed, previewRecord(kind, d, ed));   // ed is the object inside T.deductions
   render();
 }
 
