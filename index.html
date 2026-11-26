@@ -356,6 +356,75 @@
   .swatch .chip-prev { width: 100%; height: 54px; border-radius: 11px; }
   .swatch.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
   .swatch small { color: var(--text-3); font-size: 11.5px; font-weight: 400; }
+
+  /* ============ Page switch + Estimator ============ */
+  h1.pages { display: flex; gap: 16px; align-items: baseline; }
+  h1.pages button { font: inherit; letter-spacing: inherit; color: var(--text-3); background: none; border: 0; padding: 0; cursor: pointer; }
+  h1.pages button:hover { color: var(--text-2); }
+  h1.pages button.on { color: var(--text); }
+  .save-state { border: 0; background: none; font: 12.5px var(--font); color: var(--text-3); padding: 0; cursor: default; text-align: right; }
+  .save-state.ok::before { content: "✓ "; color: var(--good); }
+  .save-state.bad { color: var(--critical); cursor: pointer; }
+  .est-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px 22px; }
+  .ef { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+  .ef-l { font-size: 12.5px; color: var(--text-2); font-weight: 500; }
+  .ef-note { font-size: 12.5px; color: var(--text-3); }
+  .ef-note b { color: var(--text-2); font-weight: 600; }
+  .ef input[type=range] { padding: 0; background: none; accent-color: var(--accent); width: 100%; }
+  .stepper { display: flex; align-items: center; gap: 6px; }
+  .stepper button { width: 38px; height: 38px; border-radius: 50%; border: 0; background: var(--fill); color: var(--text); font-size: 18px; cursor: pointer; flex: none; }
+  .stepper input { width: 70px; text-align: center; height: 38px; font-size: 16px; font-weight: 600; }
+  .money-in { display: flex; align-items: center; background: var(--fill); border-radius: 10px; padding: 0 10px; min-width: 0; }
+  .money-in:focus-within { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 50%, transparent); }
+  .money-in span, .money-in em { color: var(--text-3); font-style: normal; font-size: 14px; }
+  .money-in input { background: none; box-shadow: none !important; padding: 9px 6px; width: 100%; min-width: 0; font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .quick { display: flex; flex-wrap: wrap; gap: 6px; }
+  .qchip { border: 1px solid transparent; background: var(--fill-2); color: var(--text-2); font: 12px var(--font); padding: 4px 10px; border-radius: 99px; cursor: pointer; }
+  .qchip b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .qchip:hover { background: var(--fill); }
+  .qchip.on { border-color: var(--accent); }
+  #est-pattern { align-self: flex-start; }
+  input[type=number]::-webkit-inner-spin-button { opacity: .4; }
+
+  .erow { display: grid; grid-template-columns: minmax(130px, 1.5fr) 118px 136px minmax(150px, 1.1fr) 82px 34px; gap: 8px; align-items: center; padding: 6px 0; }
+  .erow + .erow { border-top: 1px solid var(--sep); }
+  .erow.ehead { color: var(--text-3); font-size: 12px; padding: 0 0 4px; border-bottom: 1px solid var(--sep); }
+  .erow input, .erow select { width: 100%; min-width: 0; height: 38px; }
+  .erow select:disabled { opacity: .55; }
+  .e-name { font-weight: 500; }
+  .e-amt { display: flex; align-items: center; background: var(--fill); border-radius: 10px; padding-left: 10px; }
+  .e-amt span { color: var(--text-3); }
+  .e-amt input { background: none; padding-left: 4px; font-variant-numeric: tabular-nums; box-shadow: none !important; }
+  .e-amt:focus-within { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 50%, transparent); }
+  .e-mo { text-align: right; color: var(--text-3); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .e-del { width: 34px; height: 34px; border-radius: 50%; border: 0; background: transparent; color: var(--text-3); font-size: 20px; cursor: pointer; }
+  .e-del:hover { background: rgba(255,69,58,.18); color: var(--critical); }
+  #est-add { margin-left: auto; }
+  .toast-undo { border: 0; background: none; color: var(--accent); font: 600 13.5px var(--font); margin-left: 10px; cursor: pointer; padding: 0; }
+  .accent-text { color: var(--accent); }
+
+  #est-plan-month { height: 34px; padding: 4px 10px; }
+  .plan-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 16px; }
+  .plan-cols .set-label { margin-bottom: 4px; }
+  .due { display: inline-block; min-width: 40px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+  #est-plan .hero-line b { font-size: 30px; }
+  #est-chart .draw { stroke-dasharray: 2400; animation: drawln 1.3s var(--ease) backwards; }
+  #est-chart.noanim .draw { animation: none; stroke-dasharray: none; }
+  @keyframes drawln { from { stroke-dashoffset: 2400; } to { stroke-dashoffset: 0; } }
+  .est-table .m-lbl { display: none; }
+  .est-table td.c-tot { font-weight: 600; }
+
+  @media (max-width: 860px) { .plan-cols { grid-template-columns: 1fr; gap: 10px; } }
+  @media (max-width: 600px) {
+    h1.pages { gap: 12px; }
+    .erow { grid-template-columns: 1fr 1fr 34px; grid-template-areas: "name name del" "amt freq freq" "due due mo"; row-gap: 8px; padding: 12px 0; }
+    .erow.ehead { display: none; }
+    .erow .e-name { grid-area: name; } .erow .e-amt { grid-area: amt; } .erow .e-freq { grid-area: freq; }
+    .erow .e-due { grid-area: due; } .erow .e-mo { grid-area: mo; } .erow .e-del { grid-area: del; }
+    .est-table .m-lbl { display: inline; color: var(--text-3); }
+    .est-table td.c-sub.up, .est-table td.c-sub.down { font-weight: 500; }
+  }
 </style>
 </head>
 <body>
@@ -364,7 +433,7 @@
 <header class="nav">
   <div class="nav-inner">
     <div>
-      <h1>Income</h1>
+      <h1 class="pages" role="tablist" aria-label="Page"><button role="tab" data-page="income" class="on">Income</button><button role="tab" data-page="estimator">Estimator</button></h1>
       <div class="sub" id="asof"></div>
     </div>
     <div class="nav-actions" id="nav-actions">
@@ -384,7 +453,7 @@
   </div>
 </header>
 
-<main class="wrap">
+<main class="wrap" id="page-income">
   <div id="alert"></div>
   <div class="grid kpis" id="kpis"><div class="card glass kpi skel"><div class="label">&nbsp;</div><div class="value">&nbsp;</div><div class="note">&nbsp;</div></div><div class="card glass kpi skel"><div class="label">&nbsp;</div><div class="value">&nbsp;</div><div class="note">&nbsp;</div></div><div class="card glass kpi skel"><div class="label">&nbsp;</div><div class="value">&nbsp;</div><div class="note">&nbsp;</div></div><div class="card glass kpi skel"><div class="label">&nbsp;</div><div class="value">&nbsp;</div><div class="note">&nbsp;</div></div><div class="card glass kpi skel"><div class="label">&nbsp;</div><div class="value">&nbsp;</div><div class="note">&nbsp;</div></div></div>
 
@@ -463,6 +532,70 @@
     </div>
     <button class="more" id="inc-more" hidden></button>
     <div class="foot" id="tablefoot"></div>
+  </section>
+</main>
+
+<main class="wrap" id="page-estimator" hidden>
+  <div class="grid kpis" id="est-kpis"></div>
+
+  <section class="card glass notilt" style="margin-bottom:16px">
+    <div class="card-head"><h2>Your numbers</h2><button type="button" class="save-state" id="est-save"></button></div>
+    <div class="est-fields">
+      <div class="ef">
+        <span class="ef-l">Months to look ahead</span>
+        <div class="stepper"><button type="button" data-step="-1" aria-label="Fewer months">−</button><input id="est-months" type="number" min="1" max="60" inputmode="numeric" aria-label="Months ahead"><button type="button" data-step="1" aria-label="More months">+</button></div>
+        <input type="range" id="est-months-range" min="1" max="36" aria-label="Months ahead slider">
+      </div>
+      <div class="ef">
+        <label class="ef-l" for="est-savings">Savings right now</label>
+        <div class="money-in"><span>$</span><input id="est-savings" type="number" step="0.01" inputmode="decimal"></div>
+        <div class="quick" id="est-sav-quick"></div>
+      </div>
+      <div class="ef">
+        <label class="ef-l" for="est-income">Average monthly income</label>
+        <div class="pair">
+          <div class="money-in"><span>$</span><input id="est-income" type="number" step="1" inputmode="decimal"><em>/mo</em></div>
+          <div class="money-in"><span>$</span><input id="est-income-yr" type="number" step="1" inputmode="decimal" aria-label="Yearly income"><em>/yr</em></div>
+        </div>
+        <div class="quick" id="est-inc-quick"></div>
+      </div>
+      <div class="ef">
+        <label class="ef-l" for="est-tax">Set aside for taxes</label>
+        <div class="money-in"><input id="est-tax" type="number" step="0.1" min="0" max="60" inputmode="decimal"><em>%</em></div>
+        <span class="ef-l" style="margin-top:6px">Income pattern</span>
+        <div class="seg mini" id="est-pattern"><button type="button" data-m="Seasonal">Busy &amp; slow months</button><button type="button" data-m="Even">Same every month</button></div>
+        <div class="ef-note" id="est-pattern-note"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="grid two">
+    <section class="card glass">
+      <div class="card-head"><h2 id="est-chart-title">Savings over time</h2>
+        <div class="seg mini" id="est-chart-mode"><button data-m="savings">Savings</button><button data-m="monthly">Each month</button></div></div>
+      <div class="legend" id="est-legend"></div>
+      <div class="chart"><svg id="est-chart" width="100%" height="250" role="img" aria-label="Projected savings chart"></svg></div>
+    </section>
+    <section class="card glass notilt">
+      <div class="card-head"><h2>Start-of-month plan</h2><select id="est-plan-month" aria-label="Month to plan"></select></div>
+      <div id="est-plan"></div>
+    </section>
+  </div>
+
+  <section class="card glass notilt" style="margin-bottom:16px">
+    <div class="card-head"><h2>Expenses</h2><button type="button" class="add" id="est-add">+ Add expense</button></div>
+    <div class="chips" id="est-totals"></div>
+    <div class="erow ehead" aria-hidden="true"><span>Expense</span><span>Amount</span><span>How often</span><span>When it's due</span><span class="e-mo">Per month</span><span></span></div>
+    <div id="est-list"></div>
+  </section>
+
+  <section class="card glass">
+    <div class="card-head"><h2>Month by month</h2></div>
+    <div class="table-scroll"><table class="est-table">
+      <thead><tr><th>Month</th><th class="num">Income</th><th class="num">Taxes</th><th class="num">Expenses</th><th class="num">Left over</th><th class="num" title="How much to keep in savings going into this month so slower months after it are covered">Keep in reserve</th><th class="num">Savings after</th></tr></thead>
+      <tbody id="est-rows"></tbody>
+    </table></div>
+    <div class="foot">Expenses is also what to have in checking on the 1st. Income is spread by your average and pattern above; it isn't your booked gigs.</div>
   </section>
 </main>
 
@@ -707,6 +840,7 @@ function render(T) {
   if (T) STATE.T = T;
   T = STATE.T;
   if (!T) return;
+  if (window.Estimator) try { Estimator.data(T); } catch (e) { console.error(e); }
   const today = todayISO(), curYear = +today.slice(0, 4);
   const years = T.years && T.years.length ? T.years : [curYear];
   if (!years.includes(STATE.year)) {
@@ -734,6 +868,7 @@ function render(T) {
     ? `Live from your sheet · updated ${new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
     : `Sample from your sheet · ${fmtDate(T.snapshot, true)}`;
   $("sheetlink").href = T.sheetUrl;
+  if ($("page-income").hidden) return;   // Estimator page is showing: income charts draw when you switch back
   document.querySelectorAll(".live-only").forEach(b => b.hidden = false);
   if (T.options) {
     const fill = (id, arr) => $(id).innerHTML = (arr || []).map(o => `<option value="${esc(o)}">`).join("");
@@ -1222,7 +1357,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $("add-menu"
     if (raf) return;
     raf = requestAnimationFrame(() => {
       raf = 0;
-      const g = ev.target.closest && ev.target.closest("main .glass");
+      const g = ev.target.closest && ev.target.closest("main .glass:not(.notilt)");
       if (cur && cur !== g) reset(cur);
       if (g && g !== cur) enteredAt = performance.now();
       cur = g;
@@ -1373,5 +1508,6 @@ if (!REMOTE) { render(window.TRACKER); }
 else if (!getCfg()) { document.body.classList.add("loading"); $("asof").textContent = "Not connected yet"; openConnect(); }
 else load();
 </script>
+<script src="estimator.js?v=1"></script>
 </body>
 </html>
