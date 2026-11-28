@@ -444,6 +444,34 @@
     .est-table td.c-sub.up, .est-table td.c-sub.down { font-weight: 500; }
   }
 
+
+  /* Gig card */
+  dialog.gig { width: min(480px, 94vw); }
+  .gig-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 6px; }
+  .gig-head h3 { margin: 0 0 2px; }
+  .gig-head .muted { font-size: 13px; }
+  .gig-sec { padding: 14px 0; border-top: 1px solid var(--sep); }
+  .gig-head + .gig-sec { border-top: 0; }
+  .gig-sec .set-label { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0 0 10px; }
+  .gig-sec .set-label .muted { text-transform: none; letter-spacing: 0; font-family: var(--font); font-size: 12px; }
+  .gig-line { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px; }
+  .gig-line label small { display: block; color: var(--text-3); font-size: 12px; }
+  .gig-line .money-in { width: 140px; flex: none; }
+  .gig-line .money-in input { text-align: right; }
+  .gig-adds { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 8px; }
+  .gig-adds .plain { padding: 6px 11px; font-size: 13px; }
+  .ga { display: grid; grid-template-columns: 1fr auto 84px 30px; gap: 8px; align-items: center; padding: 6px 0; font-size: 14px; }
+  .ga + .ga { border-top: 1px solid var(--sep); }
+  .ga .amt { text-align: right; font-variant-numeric: tabular-nums; }
+  .ga .hrs { display: flex; align-items: center; gap: 4px; color: var(--text-3); font-size: 12.5px; }
+  .ga .hrs button { width: 28px; height: 28px; border-radius: 6px; border: 0; background: var(--fill); color: var(--text); cursor: pointer; font-size: 15px; }
+  .ga .hrs b { min-width: 34px; text-align: center; color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .ga .e-del { width: 30px; height: 30px; }
+  .gig-mile { display: flex; gap: 8px; margin-bottom: 10px; }
+  .gig-mile input { flex: 1; min-width: 0; height: 38px; }
+  .gig-sum { border-top: 1px solid var(--sep); padding-top: 12px; }
+  .gig-sum .stat-line:first-child { padding-top: 0; }
+  .gig-sum .stat-line.total { font-size: 16px; }
   /* ============ Look: typography and controls ============ */
   h1 { font-weight: 600; letter-spacing: -0.035em; }
   h2 { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
@@ -723,6 +751,38 @@
   <div class="factions"><button type="submit" class="add">Done</button></div>
 </form></dialog>
 
+<dialog id="dlg-gig" class="gig"><form id="gig-form">
+  <div class="gig-head"><div><h3 id="gig-title"></h3><div class="muted" id="gig-sub"></div></div>
+    <button type="button" class="icon-btn" id="gig-close" aria-label="Close">×</button></div>
+  <div class="gig-sec">
+    <div class="gig-line"><label for="gig-base">Base pay <small>flex, lead, rehearsal</small></label>
+      <span class="money-in"><span>$</span><input id="gig-base" type="number" step="0.01" min="0" inputmode="decimal"></span></div>
+  </div>
+  <div class="gig-sec">
+    <div class="set-label">Add-ons</div>
+    <div id="gig-addons"></div>
+    <div class="gig-adds">
+      <button type="button" class="plain" data-add="Stage">+ Stage <span class="muted">$50</span></button>
+      <button type="button" class="plain" data-add="Cocktail Hour">+ Cocktail Hour</button>
+      <button type="button" class="plain" data-add="Ceremony">+ Ceremony</button>
+      <button type="button" class="plain" data-add="Dinner Hour">+ Dinner Hour</button>
+    </div>
+    <div class="ef-note">Cocktail, ceremony and dinner hours pay $100 an hour.</div>
+  </div>
+  <div class="gig-sec">
+    <div class="set-label">Mileage <span class="muted">$0.20 a mile, round trip from home</span></div>
+    <div class="gig-mile">
+      <input id="gig-loc" placeholder="Venue or city (blank for Kansas City gigs)" aria-label="Venue or city" maxlength="200">
+      <button type="button" class="plain" id="gig-calc">Calculate</button>
+    </div>
+    <div class="gig-line"><label for="gig-miles">Round-trip miles</label>
+      <span class="money-in"><input id="gig-miles" type="number" step="1" min="0" inputmode="numeric" placeholder="0"><em>mi</em></span></div>
+    <div class="ef-note" id="gig-mile-note"></div>
+  </div>
+  <div class="gig-sum" id="gig-sum"></div>
+  <div class="factions"><span class="ferr"></span><button type="button" class="plain" id="gig-details">Edit details</button><button type="submit" class="add">Save</button></div>
+</form></dialog>
+
 <dialog id="dlg-connect"><form id="connect-form">
   <h3>Connect to your sheet</h3>
   <p class="muted" style="margin:-6px 0 16px;font-size:13.5px;line-height:1.45">Paste the data service URL and key from Apps Script.
@@ -868,11 +928,11 @@ function render(T) {
   }
   $("exp-year").innerHTML = years.map(y => `<option ${y === Y ? "selected" : ""}>${y}</option>`).join("");
 
-  const rows = T.income.map(([date, title, client, type, exp, act, method, status, pay, row, notes, rawClient], idx) => {
+  const rows = T.income.map(([date, title, client, type, exp, act, method, status, pay, row, notes, rawClient, gig], idx) => {
     const received = act !== null;
     const state = received ? "received" : (pay < today ? "overdue" : "upcoming");
     return { date, title, client, type, exp, act, method, status, pay, received, state, amount: received ? act : exp,
-      row, notes: notes || "", rawClient: rawClient || client, idx };
+      row, notes: notes || "", rawClient: rawClient || client, idx, gig: gig || null };
   });
   const yr = rows.filter(r => r.pay.startsWith(YS));
   const overdue = rows.filter(r => r.state === "overdue");
@@ -1149,7 +1209,7 @@ function render(T) {
     b.onclick = () => { STATE.open[key] = !open; redraw(); if (open) b.closest("section").scrollIntoView({ block: "nearest", behavior: "smooth" }); };
   }
   function bindEdit(tbody, list, kind) {
-    tbody.querySelectorAll("tr.edit").forEach(tr => tr.onclick = e => { if (!e.target.closest("a")) openForm(kind, list[+tr.dataset.i]); });
+    tbody.querySelectorAll("tr.edit").forEach(tr => tr.onclick = e => { if (!e.target.closest("a")) { const rec = list[+tr.dataset.i]; kind === "income" ? openGig(rec) : openForm(kind, rec); } });
   }
   function drawExp() {
     const all = exps.slice().sort(byDateDesc), list = STATE.open.exp ? all : all.slice(0, LIMIT);
@@ -1208,7 +1268,7 @@ function render(T) {
     mb.textContent = STATE.open.inc ? "Show less" : `Show all ${list.length}`;
     mb.onclick = () => { STATE.open.inc = !STATE.open.inc; renderTable(); };
     $("tablefoot").innerHTML = `${list.length} entries · expected ${money2(sum(list, r => r.exp))} · received ${money2(sum(list.filter(r => r.received), r => r.act))}
-      <span class="edit-hint"> · ${matchMedia("(hover: none)").matches ? "Tap" : "Click"} any row to edit</span>`;
+      <span class="edit-hint"> · ${matchMedia("(hover: none)").matches ? "Tap" : "Click"} a gig for its pay breakdown</span>`;
   }
   ["q", "fclient", "fstate"].forEach(id => $(id).oninput = renderTable);
   document.querySelectorAll("th[data-k]").forEach(th => th.onclick = () => {
@@ -1301,6 +1361,84 @@ document.querySelectorAll("dialog form[data-kind]").forEach(f => {
       .catch(err => { done(); f.querySelector(".ferr").textContent = err.message; });
   };
 });
+
+
+// ---- Gig card: base pay + add-ons + mileage (opens when a gig row is clicked) ----
+const GIG = { STAGE: 50, HOUR: 100, MILE: 0.20, HOURS: ["Cocktail Hour", "Ceremony", "Dinner Hour"] };
+const gigAddonPay = a => a.kind === "Stage" ? GIG.STAGE : GIG.HOUR * (a.hours || 0);
+let GC = null;   // the gig being edited: { rec, base, addons, location, miles }
+function openGig(rec) {
+  const g = rec.gig;
+  GC = { rec, base: g && g.base !== null ? g.base : rec.exp, addons: g ? g.addons.map(a => Object.assign({}, a)) : [],
+    location: g ? g.location : "", miles: g && g.miles !== null ? g.miles : "" };
+  const f = $("gig-form");
+  f.querySelector(".ferr").textContent = "";
+  $("gig-title").textContent = rec.title;
+  $("gig-sub").textContent = `${fmtDate(rec.date, true)} · ${rec.client}${rec.type ? " · " + rec.type : ""}`;
+  $("gig-base").value = GC.base ? Math.round(GC.base * 100) / 100 : "";
+  $("gig-loc").value = GC.location; $("gig-miles").value = GC.miles;
+  $("gig-mile-note").textContent = "";
+  gigAddons(); gigSum();
+  $("dlg-gig").showModal();
+}
+function gigAddons() {
+  const L = $("gig-addons");
+  L.innerHTML = GC.addons.length ? GC.addons.map((a, i) => `<div class="ga" data-i="${i}"><span>${a.kind}</span>
+      ${a.kind === "Stage" ? "<span></span>" : `<span class="hrs"><button type="button" data-h="-0.5" aria-label="Fewer hours">−</button><b>${a.hours} hr</b><button type="button" data-h="0.5" aria-label="More hours">+</button></span>`}
+      <span class="amt">${money2(gigAddonPay(a))}</span>
+      <button type="button" class="e-del" aria-label="Remove ${a.kind}">×</button></div>`).join("")
+    : `<div class="muted" style="font-size:13px;margin-bottom:4px">None yet.</div>`;
+  L.querySelectorAll(".ga").forEach(row => {
+    const a = GC.addons[+row.dataset.i];
+    row.querySelector(".e-del").onclick = () => { GC.addons.splice(+row.dataset.i, 1); gigAddons(); gigSum(); };
+    row.querySelectorAll("[data-h]").forEach(b => b.onclick = () => { a.hours = Math.max(0.5, Math.min(12, a.hours + +b.dataset.h)); gigAddons(); gigSum(); });
+  });
+}
+function gigSum() {
+  const base = parseFloat($("gig-base").value) || 0, add = sum(GC.addons, gigAddonPay);
+  const miles = parseFloat($("gig-miles").value) || 0, mp = Math.round(miles * GIG.MILE * 100) / 100, r = GC.rec;
+  const line = (l, v, cls) => `<div class="stat-line ${cls || ""}"><span>${l}</span><span class="num">${v}</span></div>`;
+  $("gig-sum").innerHTML = line("Base pay", money2(base)) + line("Add-ons", money2(add)) +
+    line(`Mileage${miles ? ` <span class="muted">(${miles.toLocaleString()} mi × $0.20)</span>` : ""}`, money2(mp)) +
+    line("Expected total", money2(base + add + mp), "total") +
+    (r.received ? line("Received", `${money2(r.act)}${Math.abs(r.act - (base + add + mp)) >= 0.01 ? ` <span class="${r.act >= base + add + mp ? "up" : "down"}" style="font-size:12px">${r.act >= base + add + mp ? "+" : "−"}${money2(Math.abs(r.act - (base + add + mp)))}</span>` : ""}`) : "");
+}
+document.querySelectorAll("#gig-form [data-add]").forEach(b => b.onclick = () => {
+  const k = b.dataset.add;
+  GC.addons.push(k === "Stage" ? { kind: "Stage" } : { kind: k, hours: 1 }); gigAddons(); gigSum();
+});
+$("gig-base").oninput = gigSum; $("gig-miles").oninput = () => { $("gig-mile-note").textContent = ""; gigSum(); };
+$("gig-close").onclick = () => $("dlg-gig").close();
+$("gig-details").onclick = () => { $("dlg-gig").close(); openForm("income", GC.rec); };
+$("gig-calc").onclick = () => {
+  const loc = $("gig-loc").value.trim(), note = $("gig-mile-note"), b = $("gig-calc");
+  if (!loc) { note.textContent = "Type the venue, address or city first."; return; }
+  if (!REMOTE) { note.textContent = "Preview only: the live dashboard asks Google Maps for the distance."; return; }
+  b.disabled = true; b.textContent = "Calculating…"; note.textContent = "";
+  api("gigMiles", { location: loc })
+    .then(m => { $("gig-miles").value = m.roundTrip; note.textContent = `${m.oneWay.toLocaleString()} mi each way to ${m.to}`; gigSum(); })
+    .catch(e => { note.textContent = /Unknown action/.test(e.message) ? "Calculating needs the new Code.gs. You can type the miles in for now." : e.message; })
+    .finally(() => { b.disabled = false; b.textContent = "Calculate"; });
+};
+$("gig-form").onsubmit = ev => {
+  ev.preventDefault();
+  const f = ev.target, btn = f.querySelector("button[type=submit]"), err = f.querySelector(".ferr"), r = GC.rec;
+  const base = parseFloat($("gig-base").value);
+  if (isNaN(base) || base < 0) { err.textContent = "Add the base pay."; return; }
+  const gig = { base, addons: GC.addons, location: $("gig-loc").value.trim(), miles: $("gig-miles").value === "" ? "" : Math.round(+$("gig-miles").value) };
+  const total = base + sum(gig.addons, gigAddonPay) + Math.round((+gig.miles || 0) * GIG.MILE * 100) / 100;
+  if (!REMOTE) {
+    const T = STATE.T, row = T.income[r.idx];
+    row[4] = total; row[12] = { base, addons: gig.addons, addonsTotal: sum(gig.addons, gigAddonPay), location: gig.location, miles: gig.miles === "" ? null : gig.miles, mileagePay: total - base - sum(gig.addons, gigAddonPay) };
+    $("dlg-gig").close(); render(); toast("Preview only: changed on this page. The live dashboard saves it to your sheet."); return;
+  }
+  if (!r.row) { err.textContent = "Saving needs the latest Code.gs. Paste it into Apps Script and deploy a new version."; return; }
+  btn.disabled = true; btn.textContent = "Saving…"; err.textContent = "";
+  api("saveGig", { row: r.row, match: { date: r.date, title: r.title }, gig })
+    .then(res => { $("dlg-gig").close(); render(res.data); toast(res.message); })
+    .catch(e => { err.textContent = /Unknown action/.test(e.message) ? "Saving needs the new Code.gs: paste it into Apps Script and deploy a new version." : e.message; })
+    .finally(() => { btn.disabled = false; btn.textContent = "Save"; });
+};
 
 // ---- Preview-only add (the live dashboard writes to the sheet instead) ----
 function previewRecord(kind, d, keep) {
@@ -1462,6 +1600,6 @@ if (!REMOTE) { render(window.TRACKER); }
 else if (!getCfg()) { document.body.classList.add("loading"); $("asof").textContent = "Not connected yet"; openConnect(); }
 else load();
 </script>
-<script src="estimator.js?v=3"></script>
+<script src="estimator.js?v=4"></script>
 </body>
 </html>
